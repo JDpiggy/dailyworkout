@@ -1,0 +1,900 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Daily Workout Tracker</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <style>
+    :root {
+      --bg: #050816;
+      --bg-card: #0f172a;
+      --accent: #38bdf8;
+      --accent-soft: rgba(56, 189, 248, 0.15);
+      --text-main: #e5e7eb;
+      --text-muted: #9ca3af;
+      --danger: #f97373;
+      --radius-lg: 18px;
+      --transition-fast: 0.25s ease;
+      --shadow-soft: 0 18px 40px rgba(15, 23, 42, 0.65);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+        sans-serif;
+      background: radial-gradient(circle at top, #0b1120 0%, #020617 55%, #020617 100%);
+      color: var(--text-main);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+    }
+
+    .shell {
+      width: 100%;
+      max-width: 720px;
+      position: relative;
+    }
+
+    .glow {
+      position: absolute;
+      inset: -40px;
+      background:
+        radial-gradient(circle at 0% 0%, rgba(56,189,248,0.25), transparent 55%),
+        radial-gradient(circle at 100% 100%, rgba(94,234,212,0.25), transparent 55%);
+      filter: blur(32px);
+      opacity: 0.8;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .card {
+      position: relative;
+      z-index: 1;
+      background: linear-gradient(145deg, #020617, #020617, #020617);
+      border-radius: 24px;
+      padding: 20px 18px 18px;
+      box-shadow: var(--shadow-soft);
+      border: 1px solid rgba(148, 163, 184, 0.15);
+      overflow: hidden;
+    }
+
+    @media (min-width: 640px) {
+      .card {
+        padding: 24px 26px 20px;
+      }
+    }
+
+    .card::before {
+      content: "";
+      position: absolute;
+      inset: -40%;
+      background: conic-gradient(
+        from 220deg,
+        rgba(56,189,248,0.18),
+        transparent 30%,
+        rgba(94,234,212,0.08),
+        transparent 70%,
+        rgba(56,189,248,0.18)
+      );
+      opacity: 0;
+      transform: translate3d(0, 20px, 0) rotate(2deg);
+      transition: opacity 0.7s ease, transform 0.7s ease;
+      pointer-events: none;
+    }
+
+    .card:hover::before {
+      opacity: 0.6;
+      transform: translate3d(0, 0, 0) rotate(0deg);
+    }
+
+    .card-inner {
+      position: relative;
+      background: radial-gradient(circle at top left, rgba(15,23,42,0.9), #020617);
+      border-radius: 18px;
+      padding: 18px;
+      backdrop-filter: blur(26px);
+      border: 1px solid rgba(148, 163, 184, 0.18);
+      overflow: hidden;
+    }
+
+    @media (min-width: 640px) {
+      .card-inner {
+        padding: 22px;
+      }
+    }
+
+    .card-inner::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at top right, rgba(56,189,248,0.12), transparent 60%);
+      opacity: 0.8;
+      pointer-events: none;
+      mix-blend-mode: screen;
+    }
+
+    header {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-bottom: 14px;
+    }
+
+    @media (min-width: 640px) {
+      header {
+        flex-direction: row;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 18px;
+      }
+    }
+
+    .title-group {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .title-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .pill {
+      width: 36px;
+      height: 36px;
+      border-radius: 12px;
+      background: radial-gradient(circle at 30% 30%, #38bdf8, #0ea5e9);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 0 22px rgba(56, 189, 248, 0.7);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .pill::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at top left, rgba(255,255,255,0.35), transparent 55%);
+      mix-blend-mode: screen;
+    }
+
+    .pill span {
+      font-size: 18px;
+      font-weight: 700;
+      color: #e0f2fe;
+      text-shadow: 0 0 6px rgba(15, 23, 42, 0.8);
+    }
+
+    h1 {
+      font-size: 20px;
+      font-weight: 650;
+      letter-spacing: 0.03em;
+      color: #e5e7eb;
+    }
+
+    @media (min-width: 640px) {
+      h1 {
+        font-size: 22px;
+      }
+    }
+
+    .subtitle {
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+
+    .day-info {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 4px;
+      text-align: left;
+      margin-top: 4px;
+    }
+
+    @media (min-width: 640px) {
+      .day-info {
+        align-items: flex-end;
+        text-align: right;
+        margin-top: 0;
+      }
+    }
+
+    .day-label {
+      font-size: 13px;
+      text-transform: uppercase;
+      letter-spacing: 0.16em;
+      color: #a5b4fc;
+    }
+
+    .date-label {
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+
+    .chip-row {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-bottom: 12px;
+    }
+
+    .chip {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.16em;
+      padding: 4px 9px;
+      border-radius: 999px;
+      border: 1px solid rgba(56,189,248,0.55);
+      background: linear-gradient(
+        120deg,
+        rgba(15,23,42,0.85),
+        rgba(15,23,42,0.9),
+        rgba(8,47,73,0.75)
+      );
+      color: #e0f2fe;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      box-shadow: 0 0 0 1px rgba(15,23,42,0.9);
+    }
+
+    .chip-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 999px;
+      background: radial-gradient(circle at 30% 30%, #22c55e, #16a34a);
+      box-shadow: 0 0 10px rgba(34,197,94,0.8);
+    }
+
+    .chip-soft {
+      border-color: rgba(148,163,184,0.45);
+      color: #cbd5f5;
+      background: linear-gradient(
+        120deg,
+        rgba(15,23,42,0.8),
+        rgba(15,23,42,0.85),
+        rgba(15,23,42,0.95)
+      );
+    }
+
+    .chip-soft .chip-dot {
+      background: radial-gradient(circle at 30% 30%, #38bdf8, #0ea5e9);
+      box-shadow: 0 0 10px rgba(56,189,248,0.9);
+    }
+
+    .workout-section {
+      position: relative;
+      z-index: 1;
+      padding: 12px 10px 10px;
+      margin-top: 4px;
+      border-radius: 14px;
+      background: radial-gradient(circle at top left, rgba(15,23,42,0.9), #020617);
+      border: 1px solid rgba(148,163,184,0.25);
+      box-shadow: inset 0 0 0 1px rgba(15,23,42,0.7);
+    }
+
+    @media (min-width: 640px) {
+      .workout-section {
+        padding: 14px 12px 12px;
+      }
+    }
+
+    .workout-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 6px;
+      margin-bottom: 10px;
+    }
+
+    .workout-title {
+      font-size: 14px;
+      text-transform: uppercase;
+      letter-spacing: 0.18em;
+      color: #cbd5f5;
+    }
+
+    .progress-pill {
+      font-size: 11px;
+      padding: 4px 10px;
+      border-radius: 999px;
+      background: rgba(15,23,42,0.9);
+      border: 1px solid rgba(148,163,184,0.6);
+      color: #e5e7eb;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .progress-bar {
+      position: relative;
+      margin-top: 8px;
+      margin-bottom: 10px;
+      height: 4px;
+      border-radius: 999px;
+      background: rgba(15,23,42,0.9);
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      position: absolute;
+      inset: 0;
+      transform-origin: left center;
+      transform: scaleX(0);
+      background: linear-gradient(90deg, #38bdf8, #22c55e);
+      box-shadow: 0 0 16px rgba(56,189,248,0.6);
+      transition: transform var(--transition-fast);
+    }
+
+    ul.tasks {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .task {
+      position: relative;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 9px;
+      border-radius: 12px;
+      background: radial-gradient(circle at top, rgba(15,23,42,0.96), #020617);
+      border: 1px solid rgba(30,64,175,0.7);
+      overflow: hidden;
+      cursor: pointer;
+      transition:
+        transform var(--transition-fast),
+        box-shadow var(--transition-fast),
+        border-color var(--transition-fast),
+        background var(--transition-fast);
+    }
+
+    .task::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at top, rgba(56,189,248,0.2), transparent 60%);
+      opacity: 0;
+      transition: opacity var(--transition-fast);
+      pointer-events: none;
+    }
+
+    .task:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 18px rgba(15,23,42,0.7);
+      border-color: rgba(56,189,248,0.9);
+    }
+
+    .task:hover::before {
+      opacity: 0.7;
+    }
+
+    .task input {
+      display: none;
+    }
+
+    .checkbox-wrap {
+      position: relative;
+      width: 22px;
+      height: 22px;
+      border-radius: 8px;
+      background: radial-gradient(circle at 20% 20%, #020617, #020617);
+      border: 1px solid rgba(148,163,184,0.7);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      box-shadow: 0 0 0 1px rgba(15,23,42,1);
+      transition:
+        border-color var(--transition-fast),
+        box-shadow var(--transition-fast),
+        transform var(--transition-fast),
+        background var(--transition-fast);
+    }
+
+    .checkmark {
+      position: relative;
+      width: 12px;
+      height: 12px;
+    }
+
+    .checkmark svg {
+      width: 100%;
+      height: 100%;
+      stroke: #38bdf8;
+      stroke-width: 3;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      fill: none;
+      stroke-dasharray: 20;
+      stroke-dashoffset: 20;
+      transform: translate3d(0, 0, 0);
+      transition:
+        stroke-dashoffset 0.22s ease-out,
+        stroke 0.18s ease-out;
+    }
+
+    .checkbox-bg {
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at 30% 20%, #38bdf8, #0284c7);
+      opacity: 0;
+      transform: scale(0.2);
+      transition:
+        opacity 0.22s ease-out,
+        transform 0.22s ease-out;
+      filter: drop-shadow(0 0 12px rgba(56,189,248,0.8));
+    }
+
+    .task-text {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .task-title {
+      font-size: 13px;
+      font-weight: 500;
+      color: #e5e7eb;
+      transition: color var(--transition-fast), opacity var(--transition-fast);
+    }
+
+    .task-meta {
+      font-size: 11px;
+      color: #9ca3af;
+      text-transform: uppercase;
+      letter-spacing: 0.14em;
+    }
+
+    .task input:checked + .checkbox-wrap {
+      border-color: rgba(56,189,248,0.95);
+      background: radial-gradient(circle at 20% 20%, #0b1120, #020617);
+      box-shadow:
+        0 0 0 1px rgba(15,23,42,0.9),
+        0 0 22px rgba(56,189,248,0.5);
+      transform: scale(1.02);
+    }
+
+    .task input:checked + .checkbox-wrap .checkmark svg {
+      stroke-dashoffset: 0;
+      stroke: #e0f2fe;
+    }
+
+    .task input:checked + .checkbox-wrap .checkbox-bg {
+      opacity: 1;
+      transform: scale(1);
+    }
+
+    .task input:checked ~ .task-text .task-title {
+      color: #a5b4fc;
+      opacity: 0.9;
+    }
+
+    .task input:checked ~ .task-text .task-meta {
+      color: #6b7280;
+    }
+
+    .footer-row {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-top: 10px;
+      margin-top: 10px;
+      border-top: 1px solid rgba(30,64,175,0.7);
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+
+    .hint {
+      opacity: 0.9;
+    }
+
+    .reset-btn {
+      border: none;
+      outline: none;
+      cursor: pointer;
+      padding: 5px 10px;
+      border-radius: 999px;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.14em;
+      background: rgba(15,23,42,0.85);
+      color: #fecaca;
+      border: 1px solid rgba(248,113,113,0.7);
+      box-shadow: 0 0 0 1px rgba(15,23,42,0.9);
+      transition:
+        background var(--transition-fast),
+        transform var(--transition-fast),
+        box-shadow var(--transition-fast),
+        color var(--transition-fast);
+    }
+
+    .reset-btn:hover {
+      background: rgba(248,113,113,0.1);
+      transform: translateY(-1px);
+      box-shadow: 0 8px 18px rgba(15,23,42,0.7);
+      color: #fee2e2;
+    }
+
+    .reset-btn:active {
+      transform: translateY(0);
+      box-shadow: none;
+    }
+
+    @media (max-width: 480px) {
+      .subtitle {
+        font-size: 12px;
+      }
+      .task-title {
+        font-size: 12px;
+      }
+      .task-meta {
+        font-size: 10px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <div class="glow"></div>
+    <div class="card">
+      <div class="card-inner">
+        <header>
+          <div class="title-group">
+            <div class="title-row">
+              <div class="pill">
+                <span>50</span>
+              </div>
+              <h1>Daily Cardio & Strength</h1>
+            </div>
+            <div class="subtitle">
+              30‑minute, low‑impact workout focused on fat burn and healthy movement.
+            </div>
+          </div>
+          <div class="day-info">
+            <div class="day-label" id="dayName">Loading…</div>
+            <div class="date-label" id="dateLabel"></div>
+          </div>
+        </header>
+
+        <div class="chip-row">
+          <div class="chip">
+            <span class="chip-dot"></span>
+            Today’s plan
+          </div>
+          <div class="chip chip-soft">
+            <span class="chip-dot"></span>
+            30 min cap
+          </div>
+        </div>
+
+        <section class="workout-section">
+          <div class="workout-header">
+            <div class="workout-title">Warm‑up · Main · Cool‑down</div>
+            <div class="progress-pill">
+              <span id="progressLabel">0 / 0 done</span>
+            </div>
+          </div>
+
+          <div class="progress-bar">
+            <div class="progress-fill" id="progressFill"></div>
+          </div>
+
+          <ul class="tasks" id="taskList">
+            <!-- tasks injected by JS -->
+          </ul>
+        </section>
+
+        <div class="footer-row">
+          <div class="hint">
+            Tip: Click anywhere on a row to toggle the checkbox.
+          </div>
+          <button class="reset-btn" id="resetBtn">
+            Reset day
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const workoutsByDay = {
+      0: [
+        {
+          id: "sun-warm",
+          title: "Easy walk warm‑up",
+          meta: "5 min · comfortable pace"
+        },
+        {
+          id: "sun-main",
+          title: "Recovery walk",
+          meta: "15–20 min · very easy"
+        },
+        {
+          id: "sun-cool",
+          title: "Gentle stretching",
+          meta: "5 min · hips, hamstrings, back"
+        }
+      ],
+      1: [
+        {
+          id: "mon-warm",
+          title: "Warm‑up walk",
+          meta: "5 min · easy pace"
+        },
+        {
+          id: "mon-main",
+          title: "Brisk walk",
+          meta: "20 min · 2 min brisk / 1 min easy"
+        },
+        {
+          id: "mon-cool",
+          title: "Bands & stretch",
+          meta: "Chest press, rows, calves"
+        }
+      ],
+      2: [
+        {
+          id: "tue-warm",
+          title: "Easy elliptical",
+          meta: "5 min · very light"
+        },
+        {
+          id: "tue-main",
+          title: "Elliptical cardio",
+          meta: "20 min · steady moderate"
+        },
+        {
+          id: "tue-cool",
+          title: "Light dumbbells",
+          meta: "Shoulder press & curls"
+        }
+      ],
+      3: [
+        {
+          id: "wed-warm",
+          title: "SkiErg warm‑up",
+          meta: "5 min · slow strokes"
+        },
+        {
+          id: "wed-main",
+          title: "SkiErg intervals",
+          meta: "20 min · 30s work / 60s easy"
+        },
+        {
+          id: "wed-cool",
+          title: "Core & stretch",
+          meta: "Plank on bench, chest stretch"
+        }
+      ],
+      4: [
+        {
+          id: "thu-warm",
+          title: "Easy walk",
+          meta: "5 min · relaxed"
+        },
+        {
+          id: "thu-main",
+          title: "Steady walk",
+          meta: "20 min · continuous moderate"
+        },
+        {
+          id: "thu-cool",
+          title: "Mobility work",
+          meta: "Hips, hamstrings, ankles"
+        }
+      ],
+      5: [
+        {
+          id: "fri-warm",
+          title: "Easy elliptical",
+          meta: "5 min · very light"
+        },
+        {
+          id: "fri-main",
+          title: "Elliptical cardio",
+          meta: "20 min · moderate pace"
+        },
+        {
+          id: "fri-cool",
+          title: "Bench + dumbbells",
+          meta: "Bench press & hip hinge"
+        }
+      ],
+      6: [
+        {
+          id: "sat-warm",
+          title: "Easy walk",
+          meta: "5 min · relaxed"
+        },
+        {
+          id: "sat-main",
+          title: "Mixed cardio",
+          meta: "20 min · walk + SkiErg or elliptical"
+        },
+        {
+          id: "sat-cool",
+          title: "Sit‑to‑stand & stretch",
+          meta: "Bench stands + light stretching"
+        }
+      ]
+    };
+
+    const dayNames = [
+      "Sunday",
+      "Monday",
+      "Tuesday",
+      "Wednesday",
+      "Thursday",
+      "Friday",
+      "Saturday"
+    ];
+
+    function formatDate(date) {
+      const opts = { weekday: undefined, year: "numeric", month: "short", day: "numeric" };
+      return date.toLocaleDateString(undefined, opts);
+    }
+
+    function localStorageKey(dayIndex) {
+      const today = new Date();
+      const year = today.getFullYear();
+      const week = getWeekNumber(today);
+      return `workout-checks-v1-day${dayIndex}-week${week}-year${year}`;
+    }
+
+    function getWeekNumber(d) {
+      const date = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+      const dayNum = date.getUTCDay() || 7;
+      date.setUTCDate(date.getUTCDate() + 4 - dayNum);
+      const yearStart = new Date(Date.UTC(date.getUTCFullYear(), 0, 1));
+      return Math.ceil(((date - yearStart) / 86400000 + 1) / 7);
+    }
+
+    function saveChecks(dayIndex) {
+      const key = localStorageKey(dayIndex);
+      const checks = {};
+      document.querySelectorAll(".task input[type='checkbox']").forEach(cb => {
+        checks[cb.dataset.taskId] = cb.checked;
+      });
+      try {
+        localStorage.setItem(key, JSON.stringify(checks));
+      } catch (e) {
+        console.warn("Could not save to localStorage", e);
+      }
+    }
+
+    function loadChecks(dayIndex) {
+      const key = localStorageKey(dayIndex);
+      try {
+        const raw = localStorage.getItem(key);
+        if (!raw) return {};
+        return JSON.parse(raw) || {};
+      } catch (e) {
+        console.warn("Could not load from localStorage", e);
+        return {};
+      }
+    }
+
+    function updateProgress() {
+      const checkboxes = Array.from(document.querySelectorAll(".task input[type='checkbox']"));
+      const total = checkboxes.length || 1;
+      const done = checkboxes.filter(cb => cb.checked).length;
+      const pct = done / total;
+      const fill = document.getElementById("progressFill");
+      const label = document.getElementById("progressLabel");
+      fill.style.transform = `scaleX(${pct})`;
+      label.textContent = `${done} / ${total} done`;
+    }
+
+    function renderForToday() {
+      const now = new Date();
+      const dayIndex = now.getDay();
+      const workouts = workoutsByDay[dayIndex] || [];
+      const dayNameEl = document.getElementById("dayName");
+      const dateLabelEl = document.getElementById("dateLabel");
+      const taskListEl = document.getElementById("taskList");
+      const saved = loadChecks(dayIndex);
+
+      dayNameEl.textContent = dayNames[dayIndex];
+      dateLabelEl.textContent = formatDate(now);
+
+      taskListEl.innerHTML = "";
+      workouts.forEach((task, idx) => {
+        const li = document.createElement("li");
+        li.className = "task";
+
+        const input = document.createElement("input");
+        input.type = "checkbox";
+        input.id = task.id;
+        input.dataset.taskId = task.id;
+        if (saved[task.id]) {
+          input.checked = true;
+        }
+
+        const checkboxWrap = document.createElement("label");
+        checkboxWrap.className = "checkbox-wrap";
+        checkboxWrap.setAttribute("for", task.id);
+
+        const bg = document.createElement("div");
+        bg.className = "checkbox-bg";
+
+        const mark = document.createElement("div");
+        mark.className = "checkmark";
+        mark.innerHTML = `
+          <svg viewBox="0 0 16 16">
+            <polyline points="3,8 7,12 13,4"></polyline>
+          </svg>
+        `;
+
+        checkboxWrap.appendChild(bg);
+        checkboxWrap.appendChild(mark);
+
+        const textWrap = document.createElement("div");
+        textWrap.className = "task-text";
+
+        const title = document.createElement("div");
+        title.className = "task-title";
+        title.textContent = task.title;
+
+        const meta = document.createElement("div");
+        meta.className = "task-meta";
+        meta.textContent = task.meta;
+
+        textWrap.appendChild(title);
+        textWrap.appendChild(meta);
+
+        li.appendChild(input);
+        li.appendChild(checkboxWrap);
+        li.appendChild(textWrap);
+
+        li.addEventListener("click", e => {
+          if (e.target.tagName.toLowerCase() === "input") return;
+          input.checked = !input.checked;
+          saveChecks(dayIndex);
+          updateProgress();
+        });
+
+        input.addEventListener("change", () => {
+          saveChecks(dayIndex);
+          updateProgress();
+        });
+
+        taskListEl.appendChild(li);
+      });
+
+      updateProgress();
+
+      const resetBtn = document.getElementById("resetBtn");
+      resetBtn.onclick = () => {
+        document
+          .querySelectorAll(".task input[type='checkbox']")
+          .forEach(cb => (cb.checked = false));
+        saveChecks(dayIndex);
+        updateProgress();
+      };
+    }
+
+    document.addEventListener("DOMContentLoaded", renderForToday);
+  </script>
+</body>
+</html>
